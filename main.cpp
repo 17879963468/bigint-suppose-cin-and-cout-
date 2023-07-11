@@ -1,131 +1,113 @@
 #include<bits/stdc++.h>
 using namespace std;
-template<class T>std::ostream& operator<<(std::ostream& os, const std::vector<T>& vec){
-    for (size_t i = 0; i < vec.size(); ++i) {os << vec[i];if (i != vec.size() - 1) {os << " ";}}return os;
-}
+#include <bits/stdc++.h>
+using namespace std;
+
 class bigint {
+#define VC vector<char>
+#define pb push_back
+#define bt bigint
+#define f(i, a, b) for(int i=(a);i<=(b);++i)
+#define rf(i, a, b) for(int i=(a);i>=(b);--i)
 public:
     int symbol = 1;
-    std::vector<char> _a;
-    int _maxsize = 0;
+    std::VC _a;
 
     int size() const { return _a.size(); }
 
-    char &operator[](int i)
-    {
-        while(i>=_a.size())_a.push_back(0);
-        return _a[i];
-    }
+    char &operator[](int i) { return _a[i]; }
 
-    static bigint add(bigint A, bigint B) {
+    static bt add(bt A, bt B) {
         if (A.size() < B.size())return add(B, A);
-        std::vector<char> C;
+        std::VC C;
         int t = 0;
-        for (int i = 0; i < A.size(); i++) {
+        f(i, 0, A.size() - 1) {
             t += A[i];
             if (i < B.size()) t += B[i];
-            C.push_back(t % 10);
+            C.pb(t % 10);
             t /= 10;
         }
-        if (t) C.push_back(t);
-        return bigint(C, A._maxsize);
+        if (t) C.pb(t);
+        return {C};
     }
-
     void resize(int size) { _a.reserve(size); }
 
-    friend bigint operator+(bigint A, bigint B)
-    {
-        if(A.symbol==-1&&B.symbol==-1)
-        {
-            auto t= add(A, B);
-            t.symbol=-1;
+    static bigint plu(bigint A, bigint B) {
+        if (A.symbol == -1 && B.symbol == -1) {
+            auto t = add(A, B);
+            t.symbol = -1;
             return t;
         }
-        if(A.symbol==-1&&B.symbol==1)
-        {
-            return sub(B,A);
-        }
-        if(A.symbol==1&&B.symbol==-1)
-        {
-            return sub(A,B);
-        }
-        if(A.symbol==1&&B.symbol==1)
-        {
-            return add(A,B);
-        }
-    }
-
-    friend bigint operator+(bigint A, int b) {
-        bigint B(b);
+        if (A.symbol == -1 && B.symbol == 1) { return sub(B, A); }
+        if (A.symbol == 1 && B.symbol == -1) { return sub(A, B); }
         return add(A, B);
     }
 
-    friend bigint operator+(int b, bigint A) {
-        bigint B(b);
-        return add(A, B);
-    }
+    template<class T,class Y>
+    friend bt operator+(T A, Y B) { return plu(A, B); }
 
-    static bigint sub(bigint A, bigint B) {
+    static bt sub(bt A, bt B) {
         A.symbol = 1, B.symbol = 1;
+        std::VC C;
         if (A < B) {
-            bigint a;
+            bt a;
             a = sub(B, A);
             a.symbol = -1;
             return a;
         }
-        std::vector<char> C;
-        for (int i = 0, t = 0; i < A.size(); i++) {
+        int t = 0;
+        f(i, 0, A.size() - 1) {
             t = A[i] - t;
             if (i < B.size()) t -= B[i];
-            C.push_back((t + 10) % 10);
+            C.pb((t + 10) % 10);
             if (t < 0) t = 1; else t = 0;
         }
         while (C.size() > 1 && C.back() == 0) C.pop_back();
-        return bigint(C, A._maxsize);
+        return bigint(C);
     }
 
-    friend bigint operator-(bigint A, bigint B) {
-        if (A.symbol == -1 && B.symbol == -1) { return sub(B, A); }
+    static bt SUB(bt A, bt B) {
+        if (A.symbol == -1 && B.symbol == -1) {
+            bigint t;
+            t = sub(A, B);
+            t.symbol *= -1;
+            return t;
+        }
+
         if (A.symbol == 1 && B.symbol == -1) { return add(A, B); }
         if (A.symbol == -1 && B.symbol == 1) {
             bigint a = add(A, B);
             a.symbol = -1;
             return a;
         }
-        if (A.symbol == 1 && B.symbol == 1) { return sub(A, B); }
+
+        return sub(A, B);
     }
 
-    static bigint smilemul(bigint &A, char b) {
-        if(b==0)return bigint(0);
-        if(b==1)return A;
-        std::vector<char> C;
+    template<class T,class Y>
+    friend bt operator-(T A, Y B) { return SUB(A, B); }
+
+    static bt smilemul(bt &A, char b) {
+        if (b == 0)return bt(0);
+        if (b == 1)return A;
+        std::VC C;
         int t = 0;
         for (int i = 0; i < A.size() || t; i++) {
             if (i < A.size()) t += A[i] * b;
-            C.push_back(t % 10);
+            C.pb(t % 10);
             t /= 10;
         }
         while (C.size() > 1 && C.back() == 0) C.pop_back();
-        return bigint(C, A._maxsize);
+        return {C};
     }
-    static bigint mul(bigint A, bigint B) {
-        //从a[]的最低位开始,每一位都乘以b[]的最低位
-        int len1=A.size();
-        int len2=B.size();
-        char *a=new char[len1];
-        char *b=new char[len2];
-        long long *c=new long long[len1+len2+10];
-        for(int i=0;i<len1+len2+9;i++)c[i]=0;
-        for(int i=0;i<len1;i++)a[i]=A[i];
-        for(int i=0;i<len1;i++)b[i]=B[i];
-        for (int i = 0; i < len1; i++)
-            for (int j = 0; j < len2; j++)
-                c[i + j] += a[i] * b[j];
-        //接下来处理进位
-        int cnt = len1 + len2;
-        long long t = 0;
-        //因为i+j最小值为2,所以从下标2开始进位
-        for (int i = 0; i <= cnt-2; i++) {
+
+    static bigint mul(bt A, bt B) {
+        int len1 = A.size(), len2 = B.size(), cnt = len1 + len2;
+        VC x;
+        long long *c = new long long[len1 + len2 + 10], t = 0;
+        f(i, 0, len1 + len2 + 8)c[i] = 0;
+        f(i, 0, len1 - 1)f(j, 0, len2 - 1)c[i + j] += A[i] * B[j];
+        f(i, 0, cnt - 1) {
             t += c[i];
             c[i] = t % 10;
             t /= 10;
@@ -135,109 +117,224 @@ public:
             t /= 10;
         }
         while (cnt >= 1 && c[cnt] == 0) cnt--;
-        vector<char>x;
-        x.assign(c,c+cnt+1);
-        bigint ans(x,int(x.size()*2));
-        return ans;
+        x.assign(c, c + cnt + 1);
+        bigint ans(x, x.size() * 2);
+        delete[] c;
+        return {x, int(x.size() * 2)};
     }
-    friend bigint operator*(bigint A, bigint B) {
+
+    friend bigint MUL(bt A, bt B) {
         if (A.symbol * B.symbol == 1)return mul(A, B);
         else {
-            bigint t = mul(A, B);
+            bt t = mul(A, B);
             t.symbol = -1;
             return t;
         }
     }
-    static bigint div(bigint A,bigint B)
-    {
-        if(A<B)return bigint(0,A._maxsize);
 
-    }
-    void init() { _a.reserve(_maxsize); }
+    template<class T,class Y>
+    friend bt operator*(T A, Y B) { return MUL(A, B); }
 
-    bigint(vector<char> c, int maxsize) : _maxsize(maxsize), _a(std::move(c)) { init(); }
-
-    bigint(vector<char> c) : _maxsize(100), _a(std::move(c)) { init(); }
-
-    bigint() {}
-
-    bigint(int x, int maxsize) : _maxsize(maxsize) {
-        init();
-        string s = to_string(x);
-        for (int i = s.size() - 1; i >= 0; i--)_a.push_back(s[i] - '0');
-    }
-
-    bigint(int x) {
-        string s = to_string(x);
-        _maxsize = min(int(s.size() * 2), 40);
-        init();
-        for (int i = s.size() - 1; i >= 0; i--)_a.push_back(s[i] - '0');
-    }
-
-    bigint operator=(int x) {
-        _maxsize = 100;
-        init();
-        string s = to_string(x);
-        if (s[0] == '-') {
-            symbol = -1;
-            for (int i = s.size() - 1; i >= 1; i--)_a.push_back(s[i] - '0');
+    static bigint smilediv(bt A, int b) {
+        char *cha = new char[A.size()], *ans = new char[A.size()];
+        int l = A.size(), m = l - 1, x = 0;
+        std::copy(A._a.begin(), A._a.end(), cha);
+        rf(i, l - 1, 0) {
+            ans[i] = (x * 10 + cha[i]) / b;
+            x = (cha[i] + x * 10) % b;
         }
-        else for (int i = s.size() - 1; i >= 0; i--)_a.push_back(s[i] - '0');
+        while (!ans[m] && m >= 1)m--;
+        bigint z(0);
+        z._a.assign(ans, ans + m + 1);
+        delete []cha;
+        delete[]ans;
+        return z;
     }
 
-    bigint operator=(long long x) {
-        _maxsize = 100;
-        init();
+    static bigint div(bt A, bt B) {
+        if (A < B)return {0};
+        bt l = 1, r = A;
+        while (l <= r) {
+            if(r.symbol==-1)exit(1);
+            bt mid = smilediv(l + r, 2);
+            if (A < mid * B)r = mid - 1;
+            else l = mid + 1;
+        }
+        return r;
+    }
+
+    friend bigint DIV(bt A, bt B) {
+        bt t = div(A, B);
+        if (A.symbol * B.symbol == -1)t.symbol = -1;
+        return t;
+    }
+
+    template<class T,class Y>
+    friend bt operator/(T A, Y B) { return DIV(A, B); }
+
+    static bigint mod(bt A, bt B) {
+        bt x = A / B;
+        return A - x * B;
+    }
+
+    friend bigint MOD(bt A, bt B) { return mod(mod(A, B) + B, B); }
+
+    template<class T,class Y>
+    friend bt operator%(T A, Y B) { return MOD(A, B); }
+
+
+    bigint(VC c, int maxsize) : _a(std::move(c)) {  }
+
+    bigint(VC c) :_a(std::move(c)) { }
+
+    bigint() { _a.assign({0}); }
+
+    template<class T>
+    bigint(T z, int maxsize)  {
+        _a.clear();
+        unsigned long long x = z;
         string s = to_string(x);
-        for (int i = s.size() - 1; i >= 0; i--)_a.push_back(s[i] - '0');
+        if (s[0] != '-')rf(i, s.size() - 1, 0)_a.pb(s[i] - '0');
+        else {
+            rf(i, s.size() - 1, 1)_a.pb(s[i] - '0');
+            symbol = -1;
+        }
     }
 
-    friend std::ostream &operator<<(std::ostream &os, bigint cc) {
-        if (cc.symbol == -1 && !(cc._a.size() == 1 && cc[0] == 0))
-            os << '-';
-        for (int i = cc.size() - 1; i >= 0; i--)os << int(cc[i]);
+    template<class T>
+    bigint(T z) {
+        _a.clear();
+        string s;
+        if (typeid(z) != typeid(const char *) && typeid(z) != typeid(string))s = to_string((long long) z); else s = z;
+        if (s[0] != '-') { rf(i, s.size() - 1, 0)_a.pb(s[i] - '0'); }
+        else {
+            rf(i, s.size() - 1, 1)_a.pb(s[i] - '0');
+            symbol = -1;
+        }
+    }
+
+    friend std::ostream &operator<<(std::ostream &os, bt cc) {
+        if (cc.symbol == -1 && !(cc._a.size() == 1 && cc[0] == 0))os << '-';
+        rf(i, cc.size() - 1, 0)os << int(cc[i]);
         return os;
     }
 
-    friend std::istream &operator>>(std::istream &is, bigint &cc) {
+    friend std::istream &operator>>(std::istream &is, bt &cc) {
+        cc._a.clear();
         std::string x;
         is >> x;
-        if (cc._maxsize == 0)cc._maxsize = max(40, int(x.size() * 2));
-        cc.init();
         if (x[0] == '-') {
             cc.symbol = -1;
-            for (int i = x.size() - 1; i >= 1; i--)cc._a.push_back(x[i] - '0');
+            rf(i, x.size() - 1, 1)cc._a.pb(x[i] - '0');
         }
-        else for (int i = x.size() - 1; i >= 0; i--)cc._a.push_back(x[i] - '0');
+        else
+            rf(i, x.size() - 1, 0)cc._a.pb(x[i] - '0');
         return is;
     }
 
-    bool operator<(bigint other) {
-        if (this->size() < other.size()||this->symbol==-1&&other.symbol==1&&!(*this==other))return 1;
-        for (int i = this->size() - 1; i >= 0; i--) { if ((*this)[i] < other[i])return 1; }
+    template<class T>
+    bool operator<(T A) {
+        bigint other = A;
+        if (this->symbol == -1 && other.symbol == 1 && !(*(this) == other))return 1;
+        if (this->size() < other.size())return 1;
+        else if (this->size() > other.size())return 0;
+        else if (this->size() == other.size())rf(i, this->size() - 1, 0) { if ((*this)[i] < other[i])return 1; }
+        return 0;
+    }
+    bool operator<(bigint A) {
+        bigint other = A;
+        if (this->symbol == -1 && other.symbol == 1 && !(*(this) == other))return 1;
+        if (this->size() < other.size())return 1;;
+       if (this->size() > other.size())return 0;
+        if (this->size() == other.size())rf(i, this->size() - 1, 0) { if ((*this)[i] < other[i])return 1;else if((*this)[i] > other[i])return 0; }
+        return 0;
+    }
+    template<class T>
+    bool operator==(T A) {
+        bigint other(A);
+        if (other._a == this->_a && other.symbol == this->symbol ||
+            (this->size() == 1 && this->symbol == -1 && other.symbol == 1 && other.size() == 1 && (*this)[0] == 0 &&other[0] == 0))return 1;
         return 0;
     }
 
-    bool operator==(bigint other) {
-        if (other._a == this->_a&&other.symbol==this->symbol||(this->size()==1&&this->symbol==-1&&other.symbol==1&&other.size()==1&&(*this)[0]==0&&other[0]==0))return 1;
-        return 0;
-    }
-
-    bool operator>(bigint other) {
+    template<class T>
+    bool operator>(T A) {
+        bigint other(A);
         if (*this < other == 0 && (*this == other) == 0)return true;
         return false;
     }
-    bigint operator-()
-    {
-        auto t=*this;
-        t.symbol*=-1;
+
+    template<class T>
+    bool operator<=(T A) {
+        bigint other(A);
+        if (*(this) < other || *this == other)return 1;
+        return 0;
+    }
+
+    template<class T>
+    bool operator>=(T A) {
+        bigint other(A);
+        if (*(this) > other || *this == other)return 1;
+        return 0;
+    }
+
+    bigint operator-() {
+        auto t = *this;
+        t.symbol *= -1;
+        return t;
+    }
+
+    bigint operator+=(bt other) {
+        *this = *this + other;
+        return *this;
+    }
+
+    bigint operator-=(bt other) {
+        *this = *this - other;
+        return *this;
+    }
+
+    bigint operator*=(bt other) {
+        *this = *this * other;
+        return *this;
+    }
+
+    bigint operator/=(bt other) {
+        *this = *this / other;
+        return *this;
+    }
+
+    bigint operator%=(bt other) {
+        *this = *this % other;
+        return *this;
+    }
+
+    bigint operator++(int) {
+        bt t = *this;
+        *this = *this + 1;
+        return t;
+    }
+
+    bigint operator++() {
+        *this = *this + 1;
+        return *this;
+    }
+
+    operator int() const {
+        int t = 0;
+        for (int i = _a.size() - 1; i >= 0; i--) { t = t * 10 + _a[i]; }
         return t;
     }
 };
-
+#define int bigint
+int ans = 1, mod = 1e9 + 7;
+string s;
 signed main()
 {
-    bigint a,b;
-    std::cin>>a>>b;
-    cout<<a*b;
+    bigint n,m,mod;
+    n=1530837320,m= 5120960151,mod= 9;
+    cin>>n>>m>>mod;
+
+    cout<<(n*m)%mod;
 }
+
